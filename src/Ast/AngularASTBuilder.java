@@ -12,13 +12,11 @@ import Ast.metadata.TemplateUrlNode;
 import Ast.methods.ConstructorNode;
 import Ast.methods.ParameterNode;
 import Ast.property.EmptyArrayNode;
-import Ast.property.PropertyDeclarationNode;
 import Ast.property.RegularPropertyNode;
 import SymbolTable.*;
 import antlr.gen.AngularParser;
 import Ast.statements.*;
 import antlr.gen.*;
-import SymbolTable.*;
 
 import java.util.*;
 //import org.antlr.runtime.tree.ParseTree;
@@ -59,39 +57,38 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
     @Override
     public Node visitProgram(AngularParser.ProgramContext ctx) {
         List<Node> applicationNodes = new ArrayList<>();
-
-        for (var child : ctx.children) {
-            Node node = visit(child);
-            if (node != null) {
-                applicationNodes.add(node);
-            }
-        }
-
-
+      for (var app:ctx.application()){
+          applicationNodes.add(visit(app));
+      }
         return new ApplicationNode(applicationNodes);
-
-
 
     }
 
     @Override
     public Node visitIMPORTLABEL(AngularParser.IMPORTLABELContext ctx) {
-        String imported = ctx.importStatement().IDENTIFIER().getText();
-        String source = ctx.importStatement().STRING().getText();
-        String key = "";
-        if (!ctx.importStatement().keyimport().isEmpty()) {
-            key = ctx.importStatement().keyimport().get(0).getText();
-        }        String scope = symbolTable.getCurrentScope();
-        symbolTable.addSymbol(new SymbolEntry(imported, SymbolType.IMPORT, key,scope));
-        ImportStatementNode importStatementNode = new ImportStatementNode(imported, source,key);
+        List<String> importedList = new ArrayList<>();
+        for (var key : ctx.importStatement().keyimport()) {
+            importedList.add(key.getText().trim());
+        }
+        String imported = String.join(", ", importedList);
+
+        String rawSource = ctx.importStatement().STRING().getText();
+        String source = rawSource.substring(1, rawSource.length() - 1);
+
+        String scope = symbolTable.getCurrentScope();
+        symbolTable.addSymbol(new SymbolEntry(imported, SymbolType.IMPORT, source, scope));
+List<KeyImportNode>app=new ArrayList<>();
+      for (var v :ctx.importStatement().keyimport()){
+       app.add((KeyImportNode) visit(v));
+     }
+        ImportStatementNode importStatementNode = new ImportStatementNode(imported, source, imported,app);
         return importStatementNode;
     }
 
     @Override
     public Node visitCOMPONENTLABEL(AngularParser.COMPONENTLABELContext ctx) {
-        String componentName = ctx.component().getText();
+        String componentName = ctx.component().getText().toString();
 
-        // Initialize the metadata list
         List<MetadataEntryNode> meta = new ArrayList<>();
 
         if (ctx.component().metadata() != null && !ctx.component().metadata().isEmpty()) {
@@ -100,8 +97,6 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
                 meta.add(entryNode);
             }
         }
-
-        // Return the ComponentNode with the component name and metadata list
         return new ComponentNode(componentName, meta);
     }
 
@@ -109,15 +104,14 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
 
     @Override
     public Node visitCLASSLABEL(AngularParser.CLASSLABELContext ctx) {
-        String className = ctx.classDeclaration().IDENTIFIER().getText();
-        String superClas = null;
-        if (ctx.classDeclaration().classInheritance() != null) {
-            superClas = ctx.classDeclaration().classInheritance().getText();
+        ClassBodyNode classBodyNode = new ClassBodyNode();
+        for (var child : ctx.children) {
+            Node element = child.accept(this);
+            if (element != null) {
+                classBodyNode.addClassElement(element);
+            }
         }
-        String classBodyElements=ctx.classDeclaration().classBody().getText();
-        symbolTable.addSymbol(new SymbolEntry(className, SymbolType.CLASS, null, symbolTable.getCurrentScope()));
-        ClassDeclarationNode classNode = new ClassDeclarationNode(className, superClas, classBodyElements);
-        return classNode;
+        return classBodyNode;
     }
 
     @Override
@@ -164,6 +158,9 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
     public Node visitBasicMetadata(AngularParser.BasicMetadataContext ctx) {
         String key = ctx.IDENTIFIER().getText();
         String value = ctx.STRING().getText().replaceAll("^\"|\"$", "");
+        String scope = symbolTable.getCurrentScope();
+        symbolTable.addSymbol(new SymbolEntry(key, SymbolType.METADATA, value, scope));
+
         return new BasicMetadataNode(key, value);
     }
 
@@ -176,27 +173,47 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
         for (var htmlElemCtx : ctx.htmlElement()) {
             htmlChildren.add((HtmlElementNode) visit(htmlElemCtx));
         }
+        String scope = symbolTable.getCurrentScope();
+        symbolTable.addSymbol(new SymbolEntry(key, SymbolType.METADATA, "", scope));
 
         return new HtmlMetadataNode(key, htmlChildren);
     }
 
+
+
+
     @Override
     public Node visitClassDeclaration(AngularParser.ClassDeclarationContext ctx) {
         String className = ctx.IDENTIFIER().getText();
-        String superClas = null;
-        if (ctx.classInheritance() != null) {
-            superClas = ctx.classInheritance().getText();
-        }
-        String classBodyElements=ctx.classBody().getText();
-        symbolTable.addSymbol(new SymbolEntry(className, SymbolType.CLASS, "Class Definition", symbolTable.getCurrentScope()));
 
-        ClassDeclarationNode classNode = new ClassDeclarationNode(className, superClas, classBodyElements);
-        return classNode;    }
+        String superClass = null;
+        if (ctx.classInheritance() != null) {
+            if (ctx.classInheritance().IDENTIFIER() != null && !ctx.classInheritance().IDENTIFIER().isEmpty()) {
+                superClass = ctx.classInheritance().IDENTIFIER(0).getText();
+            }
+        }
+
+        List<Node> classBodyElements = new ArrayList<>();
+        if (ctx.classBody() != null) {
+            for (var memberCtx : ctx.classBody().children) {
+                Node node = (Node) visit(memberCtx);
+                if (node != null) {
+                    classBodyElements.add(node);
+                }
+            }
+        }
+        String currentScope = symbolTable.getCurrentScope();
+        symbolTable.addSymbol(new SymbolEntry(className, SymbolType.CLASS, null, currentScope));
+
+        return new ClassDeclarationNode(className, superClass, classBodyElements);
+    }
 
     @Override
     public Node visitSelector(AngularParser.SelectorContext ctx) {
         String key = ctx.SELECTOR().getText();
         String value = ctx.STRING().getText().replaceAll("^\"|\"$", "");
+        String scope = symbolTable.getCurrentScope();
+        symbolTable.addSymbol(new SymbolEntry(key, SymbolType.METADATA, value, scope));
         return new SelectorNode(key, value);
     }
 
@@ -204,60 +221,60 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
     public Node visitTemplateurl(AngularParser.TemplateurlContext ctx) {
         String key = ctx.TEMPLATEURL().getText();
         String value = ctx.STRING().getText().replaceAll("^\"|\"$", "");
+        String scope = symbolTable.getCurrentScope();
+        symbolTable.addSymbol(new SymbolEntry(key, SymbolType.METADATA, value, scope));
         return new TemplateUrlNode(key, value);
     }
 
-/* @Override
-    public Node visitClassBodyLabel(AngularParser.ClassBodyLabelContext ctx) {
-        List<Node> classElements = new ArrayList<>();
-        ClassBodyNode clss = new ClassBodyNode();
+// @Override
+//    public Node visitClassBodyLabel(AngularParser.ClassBodyLabelContext ctx) {
+//        List<Node> classElements = new ArrayList<>();
+//        ClassBodyNode clss = new ClassBodyNode();
+//        for (var property : ctx.propertyDeclaration()) {
+//            classElements.add(visit(property));
+//        }
+//        for (var method : ctx.methodDeclaration()) {
+//            classElements.add(visit(method));
+//        }
+//        for (var constructor : ctx.constructor()) {
+//            classElements.add(visit(constructor));
+//        }
+//        for (var statement : ctx.statement()) {
+//            classElements.add(visit(statement));
+//        }
+//        for (var decorator : ctx.decorator()) {
+//            classElements.add(visit(decorator));
+//        }
+//        for (var ngOnInit : ctx.ngOnInit()) {
+//            classElements.add(visit(ngOnInit));
+//        }
+//        for (var selectProduct : ctx.selectProduct()) {
+//            classElements.add(visit(selectProduct));
+//        }
+//        for (var onbutton : ctx.onbutton()) {
+//            classElements.add(visit(onbutton));
+//        }
+//
+//
+//        for (var product : ctx.products()) {
+//            classElements.add(visit(product));
+//        }
+//        for (var lambda : ctx.lambdaExpression()) {
+//            classElements.add(visit(lambda));
+//        }
+//        clss.setClassElements(classElements);
+//        return clss;
+//    }
 
-        for (var property : ctx.propertyDeclaration()) {
-            classElements.add(visit(property));
-        }
-        for (var method : ctx.methodDeclaration()) {
-            classElements.add(visit(method));
-        }
-        for (var constructor : ctx.constructor()) {
-            classElements.add(visit(constructor));
-        }
-        for (var statement : ctx.statement()) {
-            classElements.add(visit(statement));
-        }
-        for (var decorator : ctx.decorator()) {
-            classElements.add(visit(decorator));
-        }
-        for (var ngOnInit : ctx.ngOnInit()) {
-            classElements.add(visit(ngOnInit));
-        }
-        for (var selectProduct : ctx.selectProduct()) {
-            classElements.add(visit(selectProduct));
-        }
-        for (var onbutton : ctx.onbutton()) {
-            classElements.add(visit(onbutton));
-        }
-        for (var ggg : ctx.ggg()) {
-            classElements.add(visit(ggg));
-        }
 
-        for (var product : ctx.products()) {
-            classElements.add(visit(product));
-        }
-        for (var lambda : ctx.lambdaExpression()) {
-            classElements.add(visit(lambda));
-        }
-        clss.setClassElements(classElements);
-        return clss;
-    }*/
 
     @Override
-    public Node visitPRODUCTLABEL(AngularParser.PRODUCTLABELContext ctx) {
+    public Node visitProducts(AngularParser.ProductsContext ctx) {
         String id=ctx.IDENTIFIER().getText();
         ElementListNode elements = (ElementListNode) visit(ctx.elementList());
         symbolTable.addSymbol(new SymbolEntry(id, SymbolType.FUNCTION, null, symbolTable.getCurrentScope()));
 
-        return new  ProductsNode(id,elements);
-    }
+        return new  ProductsNode(id,elements);    }
 
     @Override
     public Node visitInjectable(AngularParser.InjectableContext ctx) {
@@ -265,56 +282,82 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitELEMENTLISTLABEL(AngularParser.ELEMENTLISTLABELContext ctx) {
+    public Node visitElementList(AngularParser.ElementListContext ctx) {
         List<ElementNode> elements = new ArrayList<>();
 
         for (AngularParser.ElementContext elementCtx : ctx.element()) {
             elements.add((ElementNode) visit(elementCtx));
         }
-        return new ElementListNode(elements);
-    }
+        return new ElementListNode(elements);    }
+
 
     @Override
-    public Node visitELEMENTLABEL(AngularParser.ELEMENTLABELContext ctx) {
+    public Node visitElement(AngularParser.ElementContext ctx) {
         List<PairNode> pairs = new ArrayList<>();
 
         for (AngularParser.PairContext pairCtx : ctx.pair()) {
             pairs.add((PairNode) visit(pairCtx));
         }
 
-        return new ElementNode(pairs);
-    }
+        return new ElementNode(pairs);    }
+
 
     @Override
-    public Node visitPAIRLABEL(AngularParser.PAIRLABELContext ctx) {
-       String key=ctx.basevalue().getText();
-       String value=ctx.value().getText();
+    public Node visitPair(AngularParser.PairContext ctx) {
+        String key=ctx.basevalue().getText();
+        String value=ctx.value().getText();
+        symbolTable.addSymbol(new SymbolEntry(key, SymbolType.PARAMETER, value, symbolTable.getCurrentScope()));
+
         return new PairNode(key,value);
+
     }
 
 
 
     @Override
-    public Node visitCONSTRACTUR(AngularParser.CONSTRACTURContext ctx) {
+    public Node visitConstructor(AngularParser.ConstructorContext ctx) {
         String constructorName = ctx.CONSTRUCTOR().getText();
-        List<String> parameters = new ArrayList<>();
+
+        List<Node> parameters = new ArrayList<>();
         if (ctx.parameter() != null) {
-            for (var parameter : ctx.parameter()) {
-                parameters.add(parameter.getText());
+            for (var parameterCtx : ctx.parameter()) {
+                // Parse each parameter
+                String modifier = parameterCtx.modifiers().getText(); // مثال: private
+                String name = parameterCtx.IDENTIFIER().getText();
+                String type = parameterCtx.value().getText();
+                parameters.add(new ParameterNode(name, type, modifier));
             }
         }
-        List<String> statements = new ArrayList<>();
+
+        List<Node> statements = new ArrayList<>();
         if (ctx.statement() != null) {
-            for (var statement : ctx.statement()) {
-                statements.add(statement.getText());
+            for (var statementCtx : ctx.statement()) {
+                statements.add(new StatementNode(new Node() {
+                    @Override
+                    public String toString() {
+                        return statementCtx.getText();
+                    }
+
+                    @Override
+                    public void accept(Node visitor) {
+                        visitor.accept(this);
+                    }
+                }));
             }
         }
-        ConstructorNode constructorNode = new ConstructorNode(constructorName, parameters, statements);
-        return constructorNode;
-    }
+
+        symbolTable.addSymbol(new SymbolEntry(
+                constructorName,
+                SymbolType.CONSTRUCTOR,
+                "CONSTRUCTER",
+                symbolTable.getCurrentScope()
+        ));
+
+        return new ConstructorNode(constructorName, parameters, statements);   }
+
 
     @Override
-    public Node visitPARAMETERLABEL(AngularParser.PARAMETERLABELContext ctx) {
+    public Node visitParameter(AngularParser.ParameterContext ctx) {
         String modifier = null;
         if (ctx.modifiers() != null) {
             modifier = ctx.modifiers().getText();
@@ -322,7 +365,8 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
         String name = ctx.IDENTIFIER().getText();
         String type = ctx.value().getText();
         ParameterNode parameterNode = new ParameterNode(name, type, modifier);
-        return parameterNode;    }
+        return parameterNode;     }
+
 
 
 
@@ -344,6 +388,7 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
                 statements.add( stm);
             }
         }
+        symbolTable.addSymbol(new SymbolEntry(name, SymbolType.FUNCTION, null, symbolTable.getCurrentScope()));
 
         SelectedProductNode node = new SelectedProductNode(name, parameters, statements);
         node.setVoid(isVoid);
@@ -390,6 +435,7 @@ public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
         String type = ctx.value().getText();
 
         return new EmptyArrayNode(name, type);    }
+
 
     @Override
     public Node visitHtmlElement(AngularParser.HtmlElementContext ctx) {

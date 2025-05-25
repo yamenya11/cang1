@@ -6,10 +6,11 @@ import Ast.Node;
 
 public class ConstructorNode extends Node {
     private String name;
-    private List<String> parameters;
-    private List<String> statements;
+    private List<Node> parameters;
+    private List<Node> statements;
 
-    public ConstructorNode(String name, List<String> parameters, List<String> statements) {
+
+    public ConstructorNode(String name, List<Node>  parameters, List<Node>  statements) {
         this.name = name;
         this.parameters = parameters;
         this.statements = statements;
@@ -23,30 +24,39 @@ public class ConstructorNode extends Node {
         this.name = name;
     }
 
-    public List<String> getParameters() {
+    public List<Node>  getParameters() {
         return parameters;
     }
 
-    public void setParameters(List<String> parameters) {
+    public void setParameters(List<Node>  parameters) {
         this.parameters = parameters;
     }
 
-    public List<String> getStatements() {
+    public List<Node>  getStatements() {
         return statements;
     }
 
-    public void setStatements(List<String> statements) {
+    public void setStatements(List<Node>  statements) {
         this.statements = statements;
     }
 
     @Override
     public String toString() {
-        return "ConstructorNode{" +
-                "name='\n" + name +'\n'+ '\'' +
-                ", parameters=\n" + parameters +'\n'+
-                ", statements=\n" + statements +'\n'+
-                '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append("ConstructorNode{\n");
+        sb.append("  name='").append(name).append("'\n");
+        sb.append("  parameters:\n");
+        for (Node param : parameters) {
+            sb.append("    ").append(param).append("\n");
+        }
+        sb.append("  statements:\n");
+        for (Node stmt : statements) {
+            sb.append("    ").append(stmt).append("\n");
+        }
+        sb.append("}");
+        return sb.toString();
     }
+
 
     @Override
     public void accept(Node visitor) {

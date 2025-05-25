@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'app-root',
   template: `<div *ngFor="let product of products">
-                 <app-user>{{ product.name }}</h2>
+             //    <app-user>{{ product.name }}</h2>
                  <p>السعر: {{ product.price }} ل س</p>
                  <button (click)="selectProduct(product)">عرض التفاصيل</button>
                   <img [src]="product.image" alt="{{ product.name }}" />

@@ -1,17 +1,20 @@
-package Ast.statements;
+package Ast.application;
 
 import Ast.Node;
+
+import java.util.List;
 
 public class ImportStatementNode extends Node {
     private String imported;
     private String source;
     private String key;
+    List<KeyImportNode>app;
 
-
-    public ImportStatementNode(String imported, String source,String key) {
+    public ImportStatementNode(String imported, String source,String key, List<KeyImportNode>app) {
         this.imported = imported;
         this.source = source;
         this.key=key;
+       this.app = app;
     }
 
     // Getter and Setter for imported
@@ -32,12 +35,14 @@ public class ImportStatementNode extends Node {
         this.source = source;
     }
 
+
     @Override
     public String toString() {
         return "ImportStatementNode{" +
-                "imported='" + imported + '\n' +
-                ", source='" + source + '\n' +
-                ",key='"+key+'\n'+
+                "imported='" + imported + '\'' +
+                ", source='" + source + '\'' +
+                ", key='" + key + '\'' +
+                ", app=" + app +
                 '}';
     }
 

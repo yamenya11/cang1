@@ -1,12 +1,6 @@
 package Ast.application;
 
 import Ast.Node;
-import Ast.components.ComponentNode;
-import Ast.components.Injectable;
-import Ast.declarations.ClassDeclarationNode;
-import Ast.html.HtmlElementNode;
-import Ast.statements.ImportStatementNode;
-import Ast.statements.StatementNode;
 
 import java.util.ArrayList;
 import java.util.List;

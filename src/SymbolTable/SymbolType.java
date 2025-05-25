@@ -25,5 +25,6 @@ public enum SymbolType {
     TYPE,
     ARRAY_TYPE,
     NAME,
-    INJECTABLE
+    INJECTABLE,
+    PAIR
 }

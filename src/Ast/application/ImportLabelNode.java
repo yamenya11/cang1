@@ -11,11 +11,11 @@ public class ImportLabelNode extends Node {
 
     @Override
     public String toString() {
-        return "ImportLabelNode{importStatement='" + importStatement + "'}";
+        return "ImportLabelNode{importStatement='\n" + importStatement + "\n'}";
     }
 
     @Override
     public void accept(Node visitor) {
-        visitor.accept(this); // يقوم الزائر بزيارة العقدة هذه
+        visitor.accept(this);
     }
 }
