@@ -1,0 +1,29 @@
+package SymbolTable;
+
+public enum SymbolType {
+    IMPORT,
+    COMPONENT,
+    VARIABLE,
+    FUNCTION,
+    CLASS,
+    METADATA,
+    PROPERTY,
+    CONSTRUCTOR,
+    LOOP,
+    SWITCH,
+    CONDITIONAL,
+    CASE,
+    EXPRESSION,
+    PARAMETER,
+    METHOD,
+    LITERAL,
+    IDENTIFIER,
+    FUNCTION_CALL,
+    ARRAY,
+    METHOD_SIGNATURE,
+    INTERFACE,
+    TYPE,
+    ARRAY_TYPE,
+    NAME,
+    INJECTABLE
+}

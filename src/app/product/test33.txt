@@ -1,0 +1,20 @@
+import { Component, OnInit } from '@angular/core';
+import { ParserService } from './parser.service';
+
+@Component({
+  selector: 'app-product'
+})
+export class ProductComponent implements OnInit {
+
+ constructor(private productService: ProductService) {
+    this.products = this.productService.getProducts();
+  }
+
+  ngOnInit(): void {
+
+    // Use the service to parse input
+    this.parsedData = this.parserService.parse();
+
+   // عرض الناتج في كونسول
+  }
+}

@@ -1,0 +1,11 @@
+<div *ngFor="let product of products">
+    <h2>{{ product.name }}</h2>
+    <p>السعر: {{ product.price }} ل س</p>
+    <button (click)="selectProduct(product)">عرض التفاصيل</button>
+</div>
+
+<div *ngIf="selectedProduct">
+    <h1>تفاصيل المنتج</h1>
+    <p>الاسم: {{ selectedProduct.name }}</p>
+    <p>السعر: {{ selectedProduct.price }} ل س</p>
+</div>
