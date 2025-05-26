@@ -19,7 +19,8 @@ import { Component } from '@angular/core';
 
 
 export class AppComponent  {
-let myVar : string = "Hello";
+let myVar: string = "Hello";     // ✅ تعريف أول
+  let myVar: number = 5;
 constructor(private productService: ProductService) {
     this.products = this.productService.getProducts();
   }
@@ -35,4 +36,7 @@ constructor(private productService: ProductService) {
   selectProduct(product: any): void {
     this.selectedProduct = product;
   }
-}
+
+}export class AppComponent {    // ❌ تكرار الكلاس
+ let myVar: string = "Hello";     // ✅ تعريف أول
+ }

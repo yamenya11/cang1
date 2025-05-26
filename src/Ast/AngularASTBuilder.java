@@ -17,16 +17,21 @@ import SymbolTable.*;
 import antlr.gen.AngularParser;
 import Ast.statements.*;
 import antlr.gen.*;
+import seminticerror.ClassSymbolTable;
+import seminticerror.ErrorHandler;
 
 import java.util.*;
 //import org.antlr.runtime.tree.ParseTree;
 
 public class AngularASTBuilder extends AngularParserBaseVisitor<Node> {
-    private SymbolTable symbolTable;
-    public AngularASTBuilder(SymbolTable symbolTable) {
+    private final SymbolTable symbolTable;
+    public AngularASTBuilder(SymbolTable symbolTable, ClassSymbolTable classSymbolTable, ErrorHandler errorHandler) {
         this.symbolTable = symbolTable;
+        this.classSymbolTable = classSymbolTable;
+        this.errorHandler = errorHandler;
     }
-
+    private final ClassSymbolTable classSymbolTable ;
+    private final ErrorHandler errorHandler;
     /*@Override
     public Node visitApplication(AngularParser.ApplicationContext ctx) {
         List<Node> applicationNodes = new ArrayList<>();
@@ -104,6 +109,7 @@ List<KeyImportNode>app=new ArrayList<>();
 
     @Override
     public Node visitCLASSLABEL(AngularParser.CLASSLABELContext ctx) {
+        String className = ctx.classDeclaration().IDENTIFIER().getText();
         ClassBodyNode classBodyNode = new ClassBodyNode();
         for (var child : ctx.children) {
             Node element = child.accept(this);
@@ -111,6 +117,12 @@ List<KeyImportNode>app=new ArrayList<>();
                 classBodyNode.addClassElement(element);
             }
         }
+        if (classSymbolTable.symbolExists(className)) {
+            errorHandler.reportSemanticError("Duplicate class definition: " + className, ctx.start);
+            return null;
+        }
+
+        classSymbolTable.addSymbol(new SymbolEntry(className, SymbolType.CLASS, null, symbolTable.getCurrentScope()));
         return classBodyNode;
     }
 

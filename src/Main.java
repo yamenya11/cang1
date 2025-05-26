@@ -5,6 +5,8 @@ import antlr.gen.AngularLexer;
 import antlr.gen.AngularParser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+import seminticerror.ClassSymbolTable;
+import seminticerror.ErrorHandler;
 
 import java.io.IOException;
 
@@ -35,9 +37,9 @@ String filePath="C:\\Users\\Yamen\\IdeaProjects\\Finalangular\\src\\app\\product
             AngularLexer lexer = new AngularLexer(source);
             AngularParser parser = new AngularParser(new CommonTokenStream(lexer));
             SymbolTable symbolTable = new SymbolTable();
-
-            AngularASTBuilder builder = new AngularASTBuilder(symbolTable);
-            Node ast = builder.visit(parser.program());
+            ClassSymbolTable classSymbolTable = new ClassSymbolTable();
+            ErrorHandler errorHandler = new ErrorHandler();
+            AngularASTBuilder builder = new AngularASTBuilder(symbolTable, classSymbolTable, errorHandler);            Node ast = builder.visit(parser.program());
 
             System.out.println("AST Constructed Successfully:");
             System.out.println(ast);
@@ -46,6 +48,13 @@ String filePath="C:\\Users\\Yamen\\IdeaProjects\\Finalangular\\src\\app\\product
 
            System.out.println("\nSymbol Table:");
            symbolTable.printSymbols();
+
+            if (errorHandler.hasErrors()) {
+                errorHandler.writeErrorsToFile("C:\\Users\\Yamen\\IdeaProjects\\Finalangular\\src\\app\\product\\semantic_errors.txt");
+                System.out.println("Semantic errors saved to semantic_errors.txt");
+            } else {
+                System.out.println("No semantic errors found.");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception e) {
