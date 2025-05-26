@@ -1,0 +1,35 @@
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  template: `<div *ngFor="let product of products">
+    <h2>{{ product.name }}</h2>
+    <p>السعر: {{ product.price }} ل س</p>
+    <button (click)="selectProduct(product)">عرض التفاصيل</button>
+</div>
+
+`
+
+
+
+
+})
+export class AppComponent {
+  products = [
+    { id: 1, name: 'منتج 1', image: 'assets/product1.jpg', details: 'تفاصيل المنتج 1' },
+    { id: 2, name: 'منتج 2', image: 'assets/product2.jpg', details: 'تفاصيل المنتج 2' },
+    { id: 3, name: 'منتج 3', image: 'assets/product3.jpg', details: 'تفاصيل المنتج 3' },
+    { id: 4, name: 'منتج 4', image: 'assets/product4.jpg', details: 'تفاصيل المنتج 4' }
+  ];
+
+  selectedProduct: any = null;
+
+  selectProduct(product: any): void {
+    this.selectedProduct = product;
+  }
+  for(let ef in fjvl){
+  ef+b=0;
+}
+
+
+}

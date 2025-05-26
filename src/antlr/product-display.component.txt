@@ -1,0 +1,21 @@
+import { Component, OnInit } from '@angular/core';
+import { ProductService } from './product.service';  // استيراد الخدمة
+
+@Component({
+  selector: 'app-product',
+  templateUrl:'./product.nn',
+  styleUrls:['jkblbl']
+})
+export class ProductComponent implements OnInit {
+  products: any[] = [];
+  selectedProduct: any;
+
+
+  ngOnInit() :void{
+    this.products = this.productService.getProducts();
+  }
+
+  selectProduct(product: any): void {
+    this.selectedProduct = product;
+  }
+}

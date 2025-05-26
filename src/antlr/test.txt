@@ -1,0 +1,27 @@
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root'
+
+})
+export class AppComponent {
+  products = [
+    { name: 'منتج 1', price: 10 },
+    { name: 'منتج 2', price: 20 },
+    { name: 'منتج 3', price: 30 }
+  ];
+
+  showDetails = (product) => {
+    console.log('تفاصيل المنتج:', product);
+  };
+
+  ngOnInit(): void {
+    this.fetchProducts();
+  }
+
+
+    for (let i = 0; i < this.products.length; i++) {
+      console.log('معالجة المنتج:', this.products);
+    }
+
+}
